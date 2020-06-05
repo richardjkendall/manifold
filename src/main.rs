@@ -4,8 +4,6 @@ use std::io::prelude::*;
 use std::io::{Write, BufReader, BufRead, Error};
 use std::convert::TryFrom;
 
-
-
 fn get_source_file(file: &str) -> Result<String, Error> {
   let mut file = File::open(file)?;
   let mut contents = String::new();
@@ -36,6 +34,31 @@ fn execute_js(code: &str) {
   println!("result: {}", result.to_rust_string_lossy(scope));
 }
 
+pub fn module_origin<'a>(
+  s: &mut impl v8::ToLocal<'a>,
+  resource_name: v8::Local<'a, v8::String>,
+) -> v8::ScriptOrigin<'a> {
+  let resource_line_offset = v8::Integer::new(s, 0);
+  let resource_column_offset = v8::Integer::new(s, 0);
+  let resource_is_shared_cross_origin = v8::Boolean::new(s, false);
+  let script_id = v8::Integer::new(s, 123);
+  let source_map_url = v8::String::new(s, "").unwrap();
+  let resource_is_opaque = v8::Boolean::new(s, true);
+  let is_wasm = v8::Boolean::new(s, false);
+  let is_module = v8::Boolean::new(s, true);
+  v8::ScriptOrigin::new(
+    resource_name.into(),
+    resource_line_offset,
+    resource_column_offset,
+    resource_is_shared_cross_origin,
+    script_id,
+    source_map_url.into(),
+    resource_is_opaque,
+    is_wasm,
+    is_module,
+  )
+}
+
 fn execute_module(name: &str) {
   let platform = v8::new_default_platform().unwrap();
   v8::V8::initialize_platform(platform);
@@ -51,16 +74,7 @@ fn execute_module(name: &str) {
   let scope = context_scope.enter();
 
   let code = v8::String::new(scope, "import 'some thing'; 1 + 1").unwrap();
-  let origin = v8::ScriptOrigin::new(v8::Local::<v8::String>::try_from("test"),          // name
-                                     v8::Integer::new(scope, 0),                        // line offset
-                                     v8::Integer::new(scope, 0),                        // column offset
-                                     v8::Boolean::new(scope, false),                    // cross origin?
-                                     v8::Integer::new(scope, 123),                      // script id
-                                     v8::String::new(scope, "source_map_url").unwrap(), // source map url
-                                     v8::Boolean::new(scope, false),                    // opaque?
-                                     v8::Boolean::new(scope, false),                    // wasm?
-                                     v8::Boolean::new(scope, true)                      // module?
-                                    )
+  let origin = module_origin(scope, resource_name: v8::Local<'a, v8::String>)
 }
 
 fn main() {
