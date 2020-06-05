@@ -51,7 +51,7 @@ fn execute_module(name: &str) {
   let scope = context_scope.enter();
 
   let code = v8::String::new(scope, "import 'some thing'; 1 + 1").unwrap();
-  let origin = v8::ScriptOrigin::new(v8::Local::<v8::String>::try_from(name),          // name
+  let origin = v8::ScriptOrigin::new(v8::Local::<v8::String>::try_from("test"),          // name
                                      v8::Integer::new(scope, 0),                        // line offset
                                      v8::Integer::new(scope, 0),                        // column offset
                                      v8::Boolean::new(scope, false),                    // cross origin?
